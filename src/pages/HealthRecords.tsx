@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, ChevronDown, ChevronUp, Download, Eye } from 'lucide-react';
 import AddRecordModal from '../components/AddRecordModal';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import {
   collection,
   addDoc,
   getDocs,
-  Timestamp
+  Timestamp,
 } from 'firebase/firestore';
 import { HealthRecord } from '../types';
 
@@ -16,7 +16,11 @@ const HealthRecords: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchHealthRecords = async () => {
-    const snapshot = await getDocs(collection(db, 'healthRecords'));
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const recordsRef = collection(db, 'healthRecords', user.uid, 'records');
+    const snapshot = await getDocs(recordsRef);
     const data: HealthRecord[] = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -33,8 +37,12 @@ const HealthRecords: React.FC = () => {
   };
 
   const handleAddRecord = async (newRecord: Omit<HealthRecord, 'id'>) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
     try {
-      const docRef = await addDoc(collection(db, 'healthRecords'), {
+      const recordsRef = collection(db, 'healthRecords', user.uid, 'records');
+      const docRef = await addDoc(recordsRef, {
         ...newRecord,
         createdAt: Timestamp.now(),
       });
@@ -145,12 +153,12 @@ const HealthRecords: React.FC = () => {
       </div>
 
       {isModalOpen && (
-  <AddRecordModal
-    isOpen={isModalOpen}
-    onClose={() => setIsModalOpen(false)}
-    onSave={handleAddRecord}
-  />
-)}
+        <AddRecordModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleAddRecord}
+        />
+      )}
     </div>
   );
 };
