@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { HealthRecord } from '../types';
 import { auth } from '../firebase'; // ✅ Already correctly imported
+import { extractTextWithOCRSpace } from '../utils/ocrSpace';
+
 
 interface Props {
   isOpen: boolean;
